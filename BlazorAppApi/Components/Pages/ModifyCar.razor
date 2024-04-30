@@ -1,0 +1,66 @@
+﻿@page "/modify-car"
+@rendermode InteractiveServer
+
+@inject NavigationManager _navigationManager
+@inject AppState _appState
+
+@inherits LayoutComponentBase
+
+@using APICoches.Models
+@using BlazorAppApi.AppState
+@using BlazorAppApi.ApiUtils
+@using BlazorBootstrap
+
+<PageTitle>Modificar coche</PageTitle>
+
+@if (_appState.Car == null)
+{
+    <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" />
+}
+else
+{
+    <h3>@_appState.Car.Brand @_appState.Car.Model</h3>
+
+    <input type="text" class="form-control" placeholder="Nueva marca (vacío para mantener)" @bind="brand" />
+    <br>
+    <input type="text" class="form-control" placeholder="Nuevo modelo (vacío para mantener)" @bind="model" />
+    <br>
+    <button align="left" class="btn btn-primary" @onclick="Modify">Modificar coche</button>
+    <br />
+
+    <Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopRight" AutoHide="true" Delay="6000" />
+}
+
+@code {
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private string brand, model;
+
+    private async Task Modify()
+    {
+        if (string.IsNullOrEmpty(brand))
+        {
+            brand = _appState.Car.Brand;
+        }
+
+        if (string.IsNullOrEmpty(model))
+        {
+            model = _appState.Car.Model;
+        }
+
+        HttpResponseMessage response = await ApiService.PutCar(_appState.Car.Id, model, brand);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _navigationManager.NavigateTo("/");
+        } else
+        {
+            messages.Add(new ToastMessage
+                {
+                    Type = ToastType.Danger,
+                    HelpText = DateTime.Now.ToString(),
+                    Message = "Error modificando el coche.",
+                });
+        }
+    }
+}

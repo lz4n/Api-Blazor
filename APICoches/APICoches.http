@@ -1,0 +1,6 @@
+@APICoches_HostAddress = http://localhost:5098
+
+GET {{APICoches_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

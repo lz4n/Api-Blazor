@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+  seq:
+    image: datalust/seq:latest
+
+  sqlserver:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+
+  apicoches:
+    image: ${DOCKER_REGISTRY-}apicoches
+    build:
+      context: .
+      dockerfile: APICoches/Dockerfile
+
+  blazorappapi:
+    image: ${DOCKER_REGISTRY-}blazorappapi
+    build:
+      context: .
+      dockerfile: BlazorAppApi/Dockerfile
+

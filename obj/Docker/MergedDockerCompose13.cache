@@ -1,0 +1,113 @@
+name: dockercompose3215010075655971629
+services:
+  apicoches:
+    build:
+      context: C:\Users\Hp\source\repos\curso\Tutorial consola
+      dockerfile: APICoches/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_HTTPS_PORTS: "8081"
+      CONNECTION_STRING: Data Source=sqlserver;Initial Catalog=ApiCarsDB2;User Id=sa;Password=PasswordO1.;TrustServerCertificate=True;Encrypt=True;
+    image: apicoches
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "50000"
+        protocol: tcp
+      - mode: ingress
+        target: 8081
+        published: "50001"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\Hp\AppData\Roaming/Microsoft/UserSecrets
+        target: /home/app/.microsoft/usersecrets
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\Hp\AppData\Roaming/ASP.NET/Https
+        target: /home/app/.aspnet/https
+        read_only: true
+        bind:
+          create_host_path: true
+  blazorappapi:
+    build:
+      context: C:\Users\Hp\source\repos\curso\Tutorial consola
+      dockerfile: BlazorAppApi/Dockerfile
+    environment:
+      API_URI: http://ApiCoches:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_HTTPS_PORTS: "8081"
+    image: blazorappapi
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "50002"
+        protocol: tcp
+      - mode: ingress
+        target: 8081
+        published: "50003"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\Hp\AppData\Roaming/Microsoft/UserSecrets
+        target: /home/app/.microsoft/usersecrets
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\Users\Hp\AppData\Roaming/ASP.NET/Https
+        target: /home/app/.aspnet/https
+        read_only: true
+        bind:
+          create_host_path: true
+  seq:
+    environment:
+      ACCEPT_EULA: "Y"
+    image: datalust/seq:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "40000"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: seqdata
+        target: /data
+        volume: {}
+  sqlserver:
+    container_name: sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      SA_PASSWORD: PasswordO1.
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 1433
+        published: "5433"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: sqldata
+        target: /var/opt/mssql
+        volume: {}
+networks:
+  default:
+    name: dockercompose3215010075655971629_default
+volumes:
+  seqdata:
+    name: dockercompose3215010075655971629_seqdata
+  sqldata:
+    name: dockercompose3215010075655971629_sqldata

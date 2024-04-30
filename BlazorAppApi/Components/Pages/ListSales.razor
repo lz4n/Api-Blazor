@@ -1,0 +1,50 @@
+﻿@page "/list-sales"
+
+@inject AppState _appState
+
+@using APICoches.Models
+@using BlazorAppApi.AppState
+@using BlazorAppApi.ApiUtils
+@using BlazorBootstrap
+
+<PageTitle>Ventas de coches</PageTitle>
+
+@if (_appState.Car == null || sales == null)
+{
+    <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" />
+} else
+{
+    <h3>@_appState.Car.Brand @_appState.Car.Model</h3>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Vendedor</th>
+                <th>Kilometraje</th>
+                <th>Precio</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Sale sale in sales)
+            {
+                <tr>
+                    <td>@sale.Seller</td>
+                    <td>@sale.Kilometers Km</td>
+                    <td>@sale.Price €</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Sale> sales;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_appState.Car != null)
+        {
+            sales = await ApiService.GetSalesByCarId(_appState.Car.Id);
+        }
+    }
+}

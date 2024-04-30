@@ -1,0 +1,53 @@
+version: '3.4'
+
+services:
+  seq:
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "40000:80"    
+    volumes:
+      - seqdata:/data
+
+  sqlserver:
+    container_name: sqlserver
+    ports:
+      - 5433:1433
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=PasswordO1.
+      - MSSQL_PID=Express
+    volumes:
+      - sqldata:/var/opt/mssql
+
+  apicoches:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - CONNECTION_STRING=Data Source=sqlserver;Initial Catalog=ApiCarsDB2;User Id=sa;Password=PasswordO1.;TrustServerCertificate=True;Encrypt=True;
+    ports:
+      - "50000:8080"
+      - "50001:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      
+  blazorappapi:
+    environment:
+      - API_URI=http://ApiCoches:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    ports:
+      - "50002:8080"
+      - "50003:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+
+volumes:
+  seqdata:
+    external: false
+  sqldata:
+    external: false

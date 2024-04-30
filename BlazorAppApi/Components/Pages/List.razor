@@ -1,0 +1,156 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@inject AppState _appState
+@inject NavigationManager _navigationManager
+
+@inherits LayoutComponentBase
+
+@using BlazorAppApi.AppState
+@using APICoches.Models
+@using BlazorAppApi.ApiUtils
+@using BlazorBootstrap
+
+<PageTitle>Lista de coches</PageTitle>
+
+<h3>Lista de coches: </h3>
+
+@if (cars != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Car car in cars)
+            {
+                <tr>
+                    <td>@car.Brand</td>
+                    <td>@car.Model</td>
+                    <td>
+                        @if (car.Sales.Count() > 0)
+                        {
+                            <button style="margin:5px;" align="left" class="btn btn-primary" @onclick="() => GoToSales(car)">Ir a ventas</button>
+                        }
+                        else
+                        {
+                            <button style="margin:5px;" align="left" class="btn btn-primary" disabled>No hay ventas</button>
+                        }
+                        <button style="margin:5px;" align="left" class="btn btn-warning" @onclick="() =>  ModifyCar(car)">Modificar</button>
+                        <button style="margin:5px;" align="left" class="btn btn-danger" @onclick="() =>  DeleteCar(car)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>Nuevo coche:</h3>
+    <input type="text" class="form-control" placeholder="Marca" @bind="brand" />
+    <br>
+    <input type="text" class="form-control" placeholder="Modelo" @bind="model" />
+    <br>
+    <button align="left" class="btn btn-primary" @onclick="NewCar">Nuevo coche</button>
+} else
+{
+    <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" />
+}
+
+<ConfirmDialog @ref="dialog" />
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopRight" AutoHide="true" Delay="6000" />
+
+@code {
+    private ConfirmDialog dialog = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private List<Car> cars;
+
+    private string brand, model;
+
+    private async Task<bool> HasSales(int id)
+    {
+        List<Sale> sales = await ApiService.GetSalesByCarId(id);
+        return sales.Count > 0;
+    }
+
+    private async Task NewCar()
+    {
+        if (string.IsNullOrEmpty(brand) || string.IsNullOrEmpty(model))
+        {
+            messages.Add(new ToastMessage
+            {
+                    Type = ToastType.Danger,
+                    Title = "Error",
+                    HelpText = DateTime.Now.ToString(),
+                    Message = "Tienes que rellenar todos los campos.",
+            });
+            return;
+        }
+
+        HttpResponseMessage response = await ApiService.PostCar(model, brand);
+
+        //Limpiamos los dos input texts para que queden vacios.
+        model = string.Empty;
+        brand = string.Empty;
+
+        if (response.IsSuccessStatusCode)
+        {
+            messages.Add(new ToastMessage
+                {
+                    Type = ToastType.Success,
+                    HelpText = DateTime.Now.ToString(),
+                    Message = "Coche insertado correctamente.",
+                });
+        } else
+        {
+            messages.Add(new ToastMessage
+                {
+                    Type = ToastType.Danger,
+                    HelpText = DateTime.Now.ToString(),
+                    Message = "Error insertando el coche.",
+                });
+        }
+
+        await ReloadTable();
+    }
+
+    private async Task DeleteCar(Car car)
+    {
+        bool confirmation = await dialog.ShowAsync(
+            title: "¿Quieres eliminar este coche?",
+            message1: $"Vas a eliminar el coche {car.Model} de la marca {car.Brand}. Una vez eliminado no se puede recuperar.",
+            message2: "¿Estás seguro?",
+            confirmDialogOptions: new ConfirmDialogOptions { NoButtonText = "No", YesButtonText = "Si" });
+
+        if (confirmation)
+        {
+            await ApiService.DeleteCar(car.Id);
+            await ReloadTable();
+        }
+    }
+
+    private void ModifyCar(Car car)
+    {
+        _appState.Car = car;
+        _navigationManager.NavigateTo("modify-car");
+    }
+
+    private void GoToSales(Car car)
+    {
+        _appState.Car = car;
+        _navigationManager.NavigateTo("list-sales");
+    }
+
+    private async Task ReloadTable()
+    {
+        cars = await ApiService.GetAllCars();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadTable();
+    }
+}
